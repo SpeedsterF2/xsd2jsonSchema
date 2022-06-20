@@ -6,6 +6,7 @@ import com.beust.jcommander.ParameterException
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
+import com.kjetland.jackson.jsonSchema.JsonSchemaConfig
 import com.kjetland.jackson.jsonSchema.JsonSchemaGenerator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -20,7 +21,7 @@ class Xsd2JsonSchema {
     @Parameter(names = [ '-o', '--output' ], description = "Path to the output file", required = true)
     String outputFilePath
 
-    @Parameter(names = [ '-e', '--entryType' ], description = "What is the entry type for the modell", required = true)
+    @Parameter(names = [ '-e', '--entryType' ], description = "What is the entry type for the model", required = true)
     String entryType
 
 
@@ -75,7 +76,8 @@ class Xsd2JsonSchema {
     private static void classToSchema(def classLoader, def className, def outputFilePath) {
         Class c = classLoader.loadClass(className)
         ObjectMapper mapper = new ObjectMapper()
-        JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(mapper,false)
+        JsonSchemaConfig config = JsonSchemaConfig.vanillaJsonSchemaDraft4();
+        JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(mapper,false,config)
         JsonNode schema = schemaGen.generateJsonSchema(c);
         def objectMapper = new ObjectMapper()
         def writer = new ObjectMapper().writer().withFeatures(SerializationFeature.INDENT_OUTPUT)
