@@ -11,6 +11,11 @@ import com.kjetland.jackson.jsonSchema.JsonSchemaGenerator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.time.LocalDate
+import java.time.ZonedDateTime
+
 /**
  * Created by eiko on 10.07.17.
  */
@@ -23,7 +28,6 @@ class Xsd2JsonSchema {
 
     @Parameter(names = [ '-e', '--entryType' ], description = "What is the entry type for the model", required = true)
     String entryType
-
 
     @Parameter(names = ['-h','--help'], help = true)
     boolean help = false
@@ -76,11 +80,38 @@ class Xsd2JsonSchema {
     private static void classToSchema(def classLoader, def className, def outputFilePath) {
         Class c = classLoader.loadClass(className)
         ObjectMapper mapper = new ObjectMapper()
-        JsonSchemaConfig config = JsonSchemaConfig.vanillaJsonSchemaDraft4()
+        def customMapping = new HashMap<String, String>();
+        customMapping.put("java.time.ZonedDateTime", "date-time")
+        customMapping.put("java.time.LocalDate", "date")
+
+        def classTypeRemapping = new HashMap<Class, Class>()
+        classTypeRemapping.put(ZonedDateTime.class, String.class);
+        classTypeRemapping.put(LocalDate.class, String.class);
+
+        JsonSchemaConfig config = JsonSchemaConfig.create(
+                false, // autoGenerateTitleForProperties
+                Optional.empty(), // defaultArrayFormat
+                false,  // useOneOfForOption
+                false,  // useOneOfForNullables
+                false,   // usePropertyOrdering
+                false, // hidePolymorphismTypeProperty
+                false, // disableWarnings
+                false, // useMinLengthForNotNull
+                false, // useTypeIdForDefinitionName
+                customMapping, // customType2FormatMapping, Map<String, String>
+                false, // useMultipleEditorSelectViaProperty
+                new HashSet<>(), // uniqueItemClasses, Set<Class>
+                new HashMap<>(), // classTypeReMapping, Map<Class, Class>
+                new HashMap<>(), // jsonSuppliers, Map<String, Supplier<JsonNode>>
+                null, // SubclassesResolver
+                false, // failOnUnknownProperties
+                null // javaxValidationGroups, List<Class>
+        )
         /*
+        JsonSchemaConfig config = JsonSchemaConfig.vanillaJsonSchemaDraft4()
         def customMapping = config.customType2FormatMapping()
-        customMapping.updated("javax.xml.datatype.XMLGregorianCalendar", "date-time")
-        customMapping.updated("com.sun.org.apache.xerces.internal.jaxp.datatype", "date-time")
+        customMapping.updated("java.time.ZonedDateTime", "date-time")
+        customMapping.updated("java.time.LocalDate", "date")
          */
         JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(mapper,true,config)
         JsonNode schema = schemaGen.generateJsonSchema(c);
@@ -143,7 +174,8 @@ class Xsd2JsonSchema {
         File f = File.createTempDir()
         String pathToGenerate = f.getCanonicalPath()
         log.info ("create Java classes from XSD here: "+pathToGenerate)
-        def command = [xjcCommand,'-npa','-p','','-d',f.getCanonicalPath(),pathToGenerate,model]
+        //def command = [xjcCommand,'-npa','-p','','-d',f.getCanonicalPath(),pathToGenerate,model]
+        def command = [xjcCommand,'-npa','-p','','-d',f.getCanonicalPath(),'-b','src/main/resources/globalBindings.xml',pathToGenerate,model]
         println "executing command ${command.join(' ')}"
         def process = new ProcessBuilder(command).start()
         process.errorStream.eachLine {
@@ -164,9 +196,11 @@ class Xsd2JsonSchema {
 
     static String compileGenerated(def sourceFileDir,String javacCommand) {
         File f = File.createTempDir()
+        copyConverters(sourceFileDir)
         String pathToGenerate = f.getCanonicalPath()
         log.info("class path for compiled Java stuff: $pathToGenerate")
         def command = [javacCommand,'-d',f.getCanonicalPath(),'-source','1.8']
+
 
         def src = new File(sourceFileDir)
         src.eachFile { file ->
@@ -189,6 +223,15 @@ class Xsd2JsonSchema {
         }
         log.info('Done compiling Java classes from {}', src.getCanonicalPath())
         return pathToGenerate
+    }
+
+    private static void copyConverters(def tmpDir) throws IOException {
+        def converters = ['XsdDateConverter.java', 'XsdDateTimeConverter.java']
+        def srcDir = Paths.get('src/main/java')
+        def destDir = Paths.get(tmpDir)
+        for (def converter : converters) {
+            Files.copy(srcDir.resolve(converter), destDir.resolve(converter) )
+        }
     }
 
     private static final Logger log=LoggerFactory.getLogger(Xsd2JsonSchema.class)

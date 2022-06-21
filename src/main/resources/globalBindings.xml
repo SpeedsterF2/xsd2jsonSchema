@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jaxb:bindings
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+        xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+        xmlns:xs="http://www.w3.org/2000/10/XMLSchema-instance"
+        xs:schemaLocation="http://java.sun.com/xml/ns/jaxb http://java.sun.com/xml/ns/jaxb/bindingschema_2_0.xsd"
+        jaxb:version="2.0">
+    <jaxb:globalBindings>
+        <!--jaxb:javaType name="java.time.OffsetDateTime" xmlType="xsd:dateTime"/-->
+        <!--jaxb:javaType name="java.util.Date" xmlType="xsd:dateTime"/-->
+        <jaxb:javaType name="java.time.ZonedDateTime"
+                       xmlType="xsd:dateTime"
+                       parseMethod="XsdDateTimeConverter.unmarshal"
+                       printMethod="XsdDateTimeConverter.marshal"/>
+        <!--jaxb:javaType name="java.time.LocalDate" xmlType="xsd:date"/-->
+        <!--jaxb:javaType name="java.util.Date" xmlType="xsd:date"/-->
+        <jaxb:javaType name="java.time.LocalDate"
+                       xmlType="xsd:date"
+                       parseMethod="XsdDateConverter.unmarshal"
+                       printMethod="XsdDateConverter.marshal"/>
+        <!--jaxb:javaType name="java.util.Date" xmlType="xsd:gMonthDay"/-->
+        <!--jaxb:javaType name="java.time.LocalDate" xmlType="xsd:gMonthDay"/-->
+        <jaxb:javaType name="java.time.LocalDate"
+                       xmlType="xsd:gMonthDay"
+                       parseMethod="XsdDateConverter.unmarshal"
+                       printMethod="XsdDateConverter.marshal"/>
+    </jaxb:globalBindings>
+</jaxb:bindings>
