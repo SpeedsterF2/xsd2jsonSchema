@@ -76,8 +76,13 @@ class Xsd2JsonSchema {
     private static void classToSchema(def classLoader, def className, def outputFilePath) {
         Class c = classLoader.loadClass(className)
         ObjectMapper mapper = new ObjectMapper()
-        JsonSchemaConfig config = JsonSchemaConfig.vanillaJsonSchemaDraft4();
-        JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(mapper,false,config)
+        JsonSchemaConfig config = JsonSchemaConfig.vanillaJsonSchemaDraft4()
+        /*
+        def customMapping = config.customType2FormatMapping()
+        customMapping.updated("javax.xml.datatype.XMLGregorianCalendar", "date-time")
+        customMapping.updated("com.sun.org.apache.xerces.internal.jaxp.datatype", "date-time")
+         */
+        JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(mapper,true,config)
         JsonNode schema = schemaGen.generateJsonSchema(c);
         def objectMapper = new ObjectMapper()
         def writer = new ObjectMapper().writer().withFeatures(SerializationFeature.INDENT_OUTPUT)
@@ -138,7 +143,7 @@ class Xsd2JsonSchema {
         File f = File.createTempDir()
         String pathToGenerate = f.getCanonicalPath()
         log.info ("create Java classes from XSD here: "+pathToGenerate)
-        def command = [xjcCommand,'-nv','-npa','-p','','-d',f.getCanonicalPath(),pathToGenerate,model]
+        def command = [xjcCommand,'-npa','-p','','-d',f.getCanonicalPath(),pathToGenerate,model]
         println "executing command ${command.join(' ')}"
         def process = new ProcessBuilder(command).start()
         process.errorStream.eachLine {

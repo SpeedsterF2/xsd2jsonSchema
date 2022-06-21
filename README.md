@@ -39,3 +39,21 @@ cd build/release
 ./xsd2jsonSchema.sh --help
 ```
 
+### JAXP tuning
+Some XSD schemas define very high values for maxOccurs, which may trigger error messages like this:
+`[ERROR] Current configuration of the parser doesn't allow a maxOccurs attribute value to be set greater than the value 5,000`
+One can work around this problem by increasing the limit using the property `jdk.xml.maxOccurLimit` via file `{java.home}/jre/lib/jaxp.properties`.
+See [JAXP Processing Limit Definitions](https://docs.oracle.com/javase/tutorial/jaxp/limits/limits.html)
+
+```properties
+# Path for this file: {java.home}/jre/lib/jaxp.properties
+jdk.xml.entityExpansionLimit=64000
+jdk.xml.elementAttributeLimit=10000
+jdk.xml.maxOccurLimit=5000
+jdk.xml.totalEntitySizeLimit=50000000
+jdk.xml.maxGeneralEntitySizeLimit=0
+jdk.xml.maxParameterEntitySizeLimit=1000000
+jdk.xml.entityReplacementLimit=3000000
+jdk.xml.maxElementDepth=0
+jdk.xml.maxXMLNameLimit=1000
+```
